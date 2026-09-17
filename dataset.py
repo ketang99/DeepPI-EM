@@ -50,9 +50,13 @@ valset = DatasetClass(
     points_sampler=points_sampler,
 )
 
+
+pm = False # should be true
+num_workers = 0 # should be 8
+
 # DataLoaders
-train_dataloader = DataLoader(trainset, batch_size=BATCH_SIZE, shuffle=True, pin_memory=True, num_workers=8)
-val_dataloader = DataLoader(valset, batch_size=VAL_BATCH_SIZE, pin_memory=True, num_workers=8)
+train_dataloader = DataLoader(trainset, batch_size=BATCH_SIZE, shuffle=True, pin_memory=pm, num_workers=num_workers)
+val_dataloader = DataLoader(valset, batch_size=VAL_BATCH_SIZE, pin_memory=pm, num_workers=num_workers)
 
 
 # --- Display Dataset Information ---

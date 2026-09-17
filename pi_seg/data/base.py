@@ -64,11 +64,9 @@ class ISDataset(torch.utils.data.dataset.Dataset):
                         index = 0
                     else:
                         index = np.random.randint(len(self.dataset_samples)-1)
-            except:
-                if len(self.dataset_samples) == 1:
-                    index = 0
-                else:
-                    index = np.random.randint(len(self.dataset_samples)-1)
+            except Exception as e:  # this has been changed
+                print("DATASET ERROR:", repr(e))
+                raise
 
     def augment_sample(self, sample) -> DSample:
         valid_augmentation = False

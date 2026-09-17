@@ -166,7 +166,7 @@ class Fcomb(nn.Module):
         repeat_idx = [1] * a.dim()
         repeat_idx[dim] = n_tile
         a = a.repeat(*(repeat_idx))
-        order_index = torch.LongTensor(np.concatenate([init_dim * np.arange(n_tile) + i for i in range(init_dim)])).to(device)
+        order_index = torch.LongTensor(np.concatenate([init_dim * np.arange(n_tile) + i for i in range(init_dim)])).to(a.device)
         return torch.index_select(a, dim, order_index)
 
     def forward(self, feature_map, z):

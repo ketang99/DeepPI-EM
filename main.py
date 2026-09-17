@@ -5,11 +5,32 @@ from dataset import train_dataloader, val_dataloader
 from model import initialize_model
 from config import device, NUM_EPOCHS, LEARNING_RATE, WEIGHT_DECAY, RESUME_TRAINING, SAVE_DIR
 
+print(f"Using device: {device}")
 
 # --- 1. Initialization ---
-# Initialize the model and optimizer based on the configurations.
 model = initialize_model()
-optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
+
+checkpoint_path = "/home/xgupke/Documents/projects/DeepPI-EM/models/pretrained_deepPI_skeletalMuscle_deploy.pth"
+
+checkpoint = torch.load(checkpoint_path, map_location=device)
+state_dict = checkpoint["state_dict"]
+
+# If current model is NOT wrapped in DataParallel, remove "module." prefix
+if not isinstance(model, torch.nn.DataParallel):
+    state_dict = {
+        k.removeprefix("module."): v
+        for k, v in state_dict.items()
+    }
+
+model.load_state_dict(state_dict)
+
+print(f"Loaded pretrained model from: {checkpoint_path}")
+
+optimizer = torch.optim.Adam(
+    model.parameters(),
+    lr=LEARNING_RATE,
+    weight_decay=WEIGHT_DECAY
+)
 
 
 # --- 2. Training State Setup ---

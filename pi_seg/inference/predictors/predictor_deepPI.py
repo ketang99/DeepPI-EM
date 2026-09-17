@@ -67,13 +67,16 @@ class PI_Predictor(object):
         input_image = self.original_image
         if prev_mask is None:
             prev_mask = self.prev_prediction
-        if hasattr(self.net.module, 'with_prev_mask') and self.net.module.with_prev_mask:
+
+        net = self.net.module if hasattr(self.net, 'module') else self.net
+
+        if hasattr(net, 'with_prev_mask') and net.with_prev_mask:
             input_image = torch.cat((input_image, prev_mask), dim=1)
 
         image_nd, clicks_lists, is_image_changed = self.apply_transforms(
             input_image, [clicks_list]
         )
-           
+        
         try:
             roi = self.transforms[0]._object_roi
             y1,y2,x1,x2 = roi

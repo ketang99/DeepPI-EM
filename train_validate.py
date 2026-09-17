@@ -21,6 +21,8 @@ def train_and_validate(model, train_loader, val_loader, optimizer,
     Main function to train and validate the model over multiple epochs.
     It handles checkpointing for the best and latest models.
     """
+
+    core_model = model.module if hasattr(model, "module") else model
     # Ensure the directory for saving models exists.
     os.makedirs(SAVE_DIR, exist_ok=True)
 
@@ -37,17 +39,23 @@ def train_and_validate(model, train_loader, val_loader, optimizer,
         train_loss = []
         
         for batch_data in tqdm(train_loader, desc=f"Epoch {epoch} - Training"):
+            print("\nGOT BATCH")
             batch_data = {k: v.to(device) for k, v in batch_data.items()}
+            print("MOVED TO DEVICE")
             image, gt_mask, points = batch_data['images'], batch_data['instances'], batch_data['points']
+
+            print("image:", image.shape, image.device)
+            print("mask:", gt_mask.shape, gt_mask.device)
             
             prev_output = torch.zeros_like(image, dtype=torch.float32)[:, :1, :, :]
             num_points = random.randint(0, NUM_MAX_POINTS)
+            print("num_points:", num_points)
 
             # Simulate interactive clicks without gradient calculation to prepare model input.
             with torch.no_grad():
                 model.eval()
                 for click_idx in range(num_points):
-                    net_input = torch.cat((image, prev_output), dim=1) if model.module.with_prev_mask else image
+                    net_input = torch.cat((image, prev_output), dim=1) if core_model.with_prev_mask else image
                     outputs = model.forward(image=net_input, mask=gt_mask, points=points, training=False, sample_cnt=SAMPLE_CNT, un_weight=False)
 
                     ps = outputs['samples']
@@ -60,13 +68,13 @@ def train_and_validate(model, train_loader, val_loader, optimizer,
             # --- Actual Training Step ---
             # Perform a forward and backward pass with gradient tracking.
             model.train()
-            net_input = torch.cat((image, prev_output), dim=1) if model.module.with_prev_mask else image
+            net_input = torch.cat((image, prev_output), dim=1) if core_model.with_prev_mask else image
             output = model.forward(image=net_input, mask=gt_mask, points=points, training=True, sample_cnt=SAMPLE_CNT, un_weight=False)
 
             # Calculate the total loss (ELBO + regularization).
-            reg_loss = l2_regularisation(model.module.feature_extractor.posterior) + \
-                       l2_regularisation(model.module.feature_extractor.prior) + \
-                       l2_regularisation(model.module.feature_extractor.fcomb.layers)
+            reg_loss = l2_regularisation(core_model.feature_extractor.posterior) + \
+                       l2_regularisation(core_model.feature_extractor.prior) + \
+                       l2_regularisation(core_model.feature_extractor.fcomb.layers)
             elbo = output['loss'].mean()
             loss = elbo + 1e-3 * reg_loss
 
@@ -123,6 +131,7 @@ def validate_model(model, val_loader):
     """
     Evaluates the model on the validation dataset and returns performance metrics.
     """
+    core_model = model.module if hasattr(model, "module") else model
     # Initialize lists to store metrics for each sample.
     accuracy_lst, iou_lst, recall_lst, precision_lst, dsc_lst = [], [], [], [], []
 
@@ -137,7 +146,7 @@ def validate_model(model, val_loader):
             # Simulate interactive clicks to get the final prediction.
             prev_output = torch.zeros_like(image, dtype=torch.float32)[:, :1, :, :]
             for click_idx in range(NUM_MAX_POINTS):
-                net_input = torch.cat((image, prev_output), dim=1) if model.module.with_prev_mask else image
+                net_input = torch.cat((image, prev_output), dim=1) if core_model.with_prev_mask else image
                 outputs = model.forward(image=net_input, mask=gt_mask, points=points, training=False, sample_cnt=SAMPLE_CNT, un_weight=False)
 
                 ps = outputs['samples']
@@ -148,7 +157,7 @@ def validate_model(model, val_loader):
                 points = get_next_points_removeall_realworld(gt_mask, points, click_idx + 1, uncertainty_map=uncertainty_map, top_uncertainty=True)
 
             # Get the final model output and calculate validation loss.
-            net_input = torch.cat((image, prev_output), dim=1) if model.module.with_prev_mask else image
+            net_input = torch.cat((image, prev_output), dim=1) if core_model.with_prev_mask else image
             output = model(image=net_input, mask=gt_mask, points=points, training=False, sample_cnt=SAMPLE_CNT, un_weight=False)
             
             # Calculate performance metrics for each item in the batch.

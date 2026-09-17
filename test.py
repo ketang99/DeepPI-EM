@@ -14,6 +14,8 @@ from dataset import valset as dataset
 
 from config import device, NUM_MAX_POINTS, TEST_SAVE_DIR, TEST_MODEL_PATH, DATASET_NAME, DATASET_DIR
 
+from PIL import Image
+
 
 def test(model_name="deepPI", max_iou_thr=1):
     """Load the trained model and evaluate its performance on the dataset."""
@@ -57,6 +59,20 @@ def test(model_name="deepPI", max_iou_thr=1):
             )
 
             sample_ious, sample_iou_b, prob_mask, pred_mask, uncertainty_map, clicks, ps = eval_result
+
+            # Save predicted mask as PNG
+            mask = pred_mask
+
+            if torch.is_tensor(mask):
+                mask = mask.detach().cpu().numpy()
+
+            mask = np.squeeze(mask)
+
+            # Convert binary mask from 0/1 to 0/255
+            mask = (mask > 0.5).astype(np.uint8) * 255
+
+            mask_path = os.path.join(TEST_SAVE_DIR, f"pred_mask_{index:03d}.png")
+            Image.fromarray(mask).save(mask_path)
             
             all_ious.append(sample_ious)
             all_ious_b.append(sample_iou_b)

@@ -259,7 +259,7 @@ class MultiPointSampler(BasePointSampler):
 
         kernel = np.ones((3, 3), np.uint8)
         eroded_mask = cv2.erode(mask.astype(np.uint8),
-                                kernel, iterations=self.positive_erode_iters).astype(np.bool)
+                                kernel, iterations=self.positive_erode_iters).astype(np.bool_)
 
         if eroded_mask.sum() > 10:
             return eroded_mask
@@ -270,7 +270,7 @@ class MultiPointSampler(BasePointSampler):
         expand_r = int(np.ceil(self.expand_ratio * np.sqrt(mask.sum())))
         kernel = np.ones((3, 3), np.uint8)
         expanded_mask = cv2.dilate(mask.astype(np.uint8), kernel, iterations=expand_r)
-        expanded_mask[mask.astype(np.bool)] = 0
+        expanded_mask[mask.astype(np.bool_)] = 0
         return expanded_mask
 
 
