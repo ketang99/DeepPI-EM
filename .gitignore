@@ -10,6 +10,6 @@ temp_file*
 cem500k_mocov2_resnet50_200ep.pth.tar
 deepPI_lucchi_deploy.pth
 deepPI_skeletalMuscle_deploy.pth
-data/
+data*
 runs/
 models/
