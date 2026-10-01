@@ -14,13 +14,13 @@ from config import device, TEST_MODEL_PATH
 # -----------------------------
 # Paths/settings
 # -----------------------------
-src_dir = Path("/home/xgupke/Documents/projects/DeepPI-EM/data_Mut1_Section6_Align/norm")
-labels_dir = src_dir.parent / "labels"
+src_dir = Path("/home/xgupke/Documents/projects/DeepPI-EM/data_Mut_Ctrl/test/input")
+labels_dir = src_dir.parent / "target"
 
 labels_dir.mkdir(parents=True, exist_ok=True)
 
 sample_cnt = 4
-threshold = 0.5
+threshold = 0.25
 
 
 # -----------------------------
@@ -43,6 +43,10 @@ print(f"Output folder: {labels_dir}")
 # Run inference
 # -----------------------------
 ome_files = sorted(src_dir.glob("*.ome.tif"))
+if len(ome_files) == 0:
+    ome_files = sorted(src_dir.glob("*.tif"))
+if len(ome_files) == 0:
+    ome_files = sorted(src_dir.glob("*.png"))
 
 with torch.no_grad():
     for src_path in tqdm(ome_files, desc="Predicting"):
